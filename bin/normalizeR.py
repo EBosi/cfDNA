@@ -169,7 +169,7 @@ def medianCorrection(l,d):
 	m = np.median([j for i in d.values() for j in i])
 	m_s = {k:np.median(v) for k,v in d.iteritems()}
 	for i,l_ in enumerate(l):
-		if l_[3] != 0: l_\ += [0]; continue
+		if l_[3] != 0: l_ += [0]; continue
 		count,gc = l_[-2:]
 		try: cc = m/float(m_s[gc])
 		except: embed()
@@ -183,6 +183,20 @@ def normalizeSingleFile(f,fxn=medianCorrection):
 	normalized_10M = normalize10M(lines)
 	gc_bins = GC_analysis(normalized_10M)
 	return medianCorrection(normalized_10M,gc_bins)
+
+def main(f,out):
+	normalized = normalizeSingleFile(f)
+	o = open(out,'w')
+	o.write("Chromosome\tStart\tEnd\tNs\tGC\tRawCounts\tCounts10M\tCounts10MGC\n")
+	for l in normalized:
+		l_ = map(str,l)
+		l_ = l_[:-2] + [l_[-1]]
+		o.write("\t".join(l_) + "\n")
+
+if __name__ == "__main__":
+	inp,out = sys.argv[1:]
+	main(inp,out)
+
 
 
 
