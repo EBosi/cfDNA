@@ -27,14 +27,14 @@ def getNormalizedCounts(f,autosome=True):
 	# FIN
 	return finals
 
-def GC_analysis(normalized):
-	""" wrap GC analysis for a list of normalized stuff """
-	GC_distr = {}
-	for n in normalized:
-		if n[3] != '0': continue
-		GC_frac = n[-1]
-		GC_distr[GC_frac] = GC_distr.get(GC_frac,[]) + [n[-2]]
-	return GC_distr
+#def GC_analysis(normalized):
+#	""" wrap GC analysis for a list of normalized stuff """
+#	GC_distr = {}
+#	for n in normalized:
+#		if n[3] != '0': continue
+#		GC_frac = n[-1]
+#		GC_distr[GC_frac] = GC_distr.get(GC_frac,[]) + [n[-2]]
+#	return GC_distr
 
 def countFile2GCDistr(count_list,autosome=True):
 	""" parse file and produce a dict of GC distributions """
@@ -127,7 +127,7 @@ def GC_norm_lowess(d):
 def GC_fraction(row):
 	""" compute the GC fraction for a bin """
 	if isinstance(row,str): row = row.split()
-	start,end,GC = map(float,row[1:3] + [row[-3]])
+	start,end,GC = map(float,row[1:3] + [row[4]])
 	return round(GC / (end - start + 1),1)*100
 
 def normalize10M(l):
@@ -135,21 +135,22 @@ def normalize10M(l):
 	norm_factor = 10000000./sum([float(i[-1]) for i in l])
 	for i in l:
 		i += [int(i[-1]) * norm_factor]
-		i[-1] *= norm_factor
-		i += [GC_fraction(i)]
+		#i[-1] *= norm_factor
+		#i += [GC_fraction(i)]
 	return l
 
 def setDataType(row):
 	""" set all members but the first element as float """
 	return [row[0]] + map(float,row[1:])
 
-def GC_analysis(normalized):
+def GC_analysis(lines):
 	""" wrap GC analysis for a list of normalized stuff """
+	for l in lines: l += [GC_fraction(l)]
 	GC_distr = {}
-	for n in normalized:
-		if n[3] != 0: continue
-		GC_frac = n[-1]
-		GC_distr[GC_frac] = GC_distr.get(GC_frac,[]) + [n[-2]]
+	for l in lines:
+		if l[3] != 0: continue
+		GC_frac = l[-1]
+		GC_distr[GC_frac] = GC_distr.get(GC_frac,[]) + [l[5]]
 	return GC_distr
 
 def medianCorrection(l,d):
@@ -179,10 +180,12 @@ def medianCorrection(l,d):
 
 def normalizeSingleFile(f,fxn=medianCorrection):
 	""" wrapper to normalize single file """
-	lines = [setDataType(i.strip().split()) for i in open(f)]
-	normalized_10M = normalize10M(lines)
-	gc_bins = GC_analysis(normalized_10M)
-	return medianCorrection(normalized_10M,gc_bins)
+	l = [setDataType(i.strip().split()) for i in open(f)]
+	gc_bins = GC_analysis(l)
+	# gc_bins = GC_analysis(normalized_10M)
+	medianCorrection(l,gc_bins)
+	normalized_10M = normalize10M(l)
+	return normalized_10M
 
 def main(f,out):
 	normalized = normalizeSingleFile(f)
